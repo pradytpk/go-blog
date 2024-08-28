@@ -13,13 +13,14 @@ type PostStore struct {
 }
 
 type Post struct {
-	ID        int64    `json:"id"`
-	Content   string   `json:"content"`
-	Title     string   `json:"title"`
-	UserID    int64    `json:"user_id"`
-	Tags      []string `json:"tags"`
-	CreatedAt string   `json:"created_at"`
-	UpdatedAt string   `json:"updated_at"`
+	ID        int64     `json:"id"`
+	Content   string    `json:"content"`
+	Title     string    `json:"title"`
+	UserID    int64     `json:"user_id"`
+	Tags      []string  `json:"tags"`
+	CreatedAt string    `json:"created_at"`
+	UpdatedAt string    `json:"updated_at"`
+	Comments  []Comment `json:"comments"`
 }
 
 func (s *PostStore) Create(ctx context.Context, post *Post) error {
@@ -39,6 +40,14 @@ func (s *PostStore) Create(ctx context.Context, post *Post) error {
 	)
 
 	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok {
+			switch pqErr.Code.Name() {
+			case "unique_violation":
+				return errors.New("a post with the same title already exists")
+			case "foreign_key_violation":
+				return errors.New("invalid user_id, user does not exist")
+			}
+		}
 		return err
 	}
 	return nil
@@ -46,7 +55,7 @@ func (s *PostStore) Create(ctx context.Context, post *Post) error {
 
 func (s *PostStore) GetByID(ctx context.Context, postID int64) (*Post, error) {
 	query := `
-	SELECT id, user_ID, title, contect, created_at, updated_at, tags
+	SELECT id, user_ID, title, content, created_at, updated_at, tags
 	FROM posts
 	WHERE id =$1`
 	var post Post
@@ -57,7 +66,7 @@ func (s *PostStore) GetByID(ctx context.Context, postID int64) (*Post, error) {
 		&post.Content,
 		&post.CreatedAt,
 		&post.UpdatedAt,
-		&post.Tags,
+		pq.Array(&post.Tags),
 	)
 	if err != nil {
 		switch {
