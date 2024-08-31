@@ -3,6 +3,9 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
+
+	"github.com/lib/pq"
 )
 
 type CommentsStore struct {
@@ -42,4 +45,32 @@ ORDER BY c.created_at DESC;
 		comments = append(comments, c)
 	}
 	return comments, nil
+}
+
+func (s *CommentsStore) Create(ctx context.Context, comment *Comment) error {
+	query := `INSERT INTO comments (post_id, user_id, content) 
+	VALUES ($1, $2, $3) RETURNING id, created_at`
+
+	err := s.db.QueryRowContext(ctx,
+		query,
+		comment.PostID,
+		comment.UserID,
+		comment.Content,
+	).Scan(
+		&comment.ID,
+		&comment.CreatedAt,
+	)
+
+	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok {
+			switch pqErr.Code.Name() {
+			case "unique_violation":
+				return errors.New("a post with the same title already exists")
+			case "foreign_key_violation":
+				return errors.New("invalid user_id, user does not exist")
+			}
+		}
+		return err
+	}
+	return nil
 }
