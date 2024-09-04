@@ -134,7 +134,7 @@ func (s *PostStore) Update(ctx context.Context, post *Post) error {
 	return nil
 }
 
-func (s *PostStore) GetUserFeed(ctx context.Context, userID int64) ([]PostWithMetaData, error) {
+func (s *PostStore) GetUserFeed(ctx context.Context, userID int64, pfq PaginatedFeedQuery) ([]PostWithMetaData, error) {
 	query := `
 SELECT
 	p.id,
@@ -159,11 +159,14 @@ GROUP BY
 	p.id,
 	u.username
 ORDER BY
-	p.created_at DESC;
+	p.created_at ` + pfq.Sort + `
+	LIMIT $2
+	OFFSET $3
+	;
 `
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
-	rows, err := s.db.QueryContext(ctx, query, userID)
+	rows, err := s.db.QueryContext(ctx, query, userID, pfq.Limit, pfq.Offset)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
