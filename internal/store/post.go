@@ -153,8 +153,10 @@ FROM
 	JOIN followers f ON f.follower_id = p.user_id
 		OR p.user_id = $1
 WHERE
-	f.user_id = $1
-	OR p.user_id = $1
+	f.user_id = $1 AND
+	(p.title ILIKE '%' || $4 || '%' OR P.content ILIKE '%' || $4 || '%') 
+	AND
+	(p.tags @> $5 OR $5='{}')
 GROUP BY
 	p.id,
 	u.username
@@ -166,7 +168,7 @@ ORDER BY
 `
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
-	rows, err := s.db.QueryContext(ctx, query, userID, pfq.Limit, pfq.Offset)
+	rows, err := s.db.QueryContext(ctx, query, userID, pfq.Limit, pfq.Offset, pfq.Search, pq.Array(pfq.Tags))
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
