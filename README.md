@@ -30,4 +30,6 @@ migrate -path=./cmd/migrate/migrations -database="postgres://admin:adminpassword
 migrate -path=./cmd/migrate/migrations -database="postgres://admin:adminpassword@localhost/social?sslmode=disable" down
 
 migrate -path=./cmd/migrate/migrations -database="postgres://admin:adminpassword@localhost/social?sslmode=disable" force 4
+
+http://localhost:8080/v1/swagger/index.html
 ```
