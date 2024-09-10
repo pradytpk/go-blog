@@ -1,11 +1,10 @@
 package main
 
 import (
-	"log"
-
 	"github.com/pradytpk/go-blog/internal/db"
 	"github.com/pradytpk/go-blog/internal/env"
 	"github.com/pradytpk/go-blog/internal/store"
+	"go.uber.org/zap"
 )
 
 //	@title			Blog API
@@ -39,23 +38,27 @@ func main() {
 		env: env.GetString("ENV", "development"),
 	}
 
+	// Logger
+	logger := zap.Must(zap.NewProduction()).Sugar()
+	defer logger.Sync()
+
+	// Database
 	db, err := db.New(cfg.db.addr, cfg.db.maxOpenConns, cfg.db.maxIdleConns, cfg.db.maxIdleTime)
 	if err != nil {
-		log.Panic("failed to create database connection: ", err)
+		logger.Fatal(err)
 	}
-	if db == nil {
-		log.Panic("database connection is nil")
-	}
+
 	defer db.Close()
-	log.Println("database connection pool established")
+	logger.Info("database connection pool established")
 
 	store := store.NewStorage(db)
 
 	app := &application{
 		config: cfg,
 		store:  store,
+		logger: logger,
 	}
 
 	mux := app.mount()
-	log.Fatal(app.run(mux))
+	logger.Fatal(app.run(mux))
 }
