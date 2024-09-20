@@ -1,8 +1,11 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/pradytpk/go-blog/internal/store"
 )
 
@@ -10,6 +13,12 @@ type RegisterUserPayload struct {
 	Username string `json:"username" validate:"required,max=100"`
 	Email    string `json:"email" validate:"required,max=255"`
 	Password string `json:"password" validate:"required,min=3,max=100"`
+	// RoleID   int    `json:"roleId" validate:"required,min=1,max=2"`
+}
+
+type UserWithToken struct {
+	*store.User
+	Token string `json:"token"`
 }
 
 // registerUserHandler godoc
@@ -20,13 +29,13 @@ type RegisterUserPayload struct {
 //	@Accept			json
 //	@Produce		json
 //	@Param			payload	body	RegisterUserPayload	true	"User credentials"
-//	@Succedd		201 {object} store.User "User registered"
+//	@Succedd		201 {object} UserWithToken "User registered"
 //	@Failure		400	{object}	error
 //	@Failure		500	{object}	error
 //	@Router			/authentication/user [post]
 func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Request) {
 	var payload RegisterUserPayload
-	if err := readJson(w, r, payload); err != nil {
+	if err := readJson(w, r, &payload); err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
@@ -40,20 +49,35 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		Email:    payload.Email,
 	}
 
-	// hash the user password
 	if err := user.Password.Set(payload.Password); err != nil {
 		app.internalServerError(w, r, err)
 	}
 
 	ctx := r.Context()
 
-	// store the user
-	if err := app.store.UsersIF.CreateAndInvite(ctx, user, "uuidv4"); err != nil {
-		app.internalServerError(w, r, err)
+	plainToken := uuid.New().String()
+
+	hash := sha256.Sum256([]byte(plainToken))
+	hashToken := hex.EncodeToString(hash[:])
+
+	if err := app.store.UsersIF.CreateAndInvite(ctx, user, hashToken, app.config.mail.exp); err != nil {
+		switch err {
+		case store.ErrDuplicateEmail:
+			app.badRequestResponse(w, r, err)
+		case store.ErrDuplicateUsername:
+			app.badRequestResponse(w, r, err)
+		default:
+			app.internalServerError(w, r, err)
+		}
+		return
 	}
 
-	// return the response
-	if err := app.jsonResponse(w, http.StatusOK, nil); err != nil {
+	userWithToken := UserWithToken{
+		User:  user,
+		Token: plainToken,
+	}
+
+	if err := app.jsonResponse(w, http.StatusCreated, userWithToken); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }

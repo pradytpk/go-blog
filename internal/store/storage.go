@@ -11,6 +11,8 @@ var (
 	ErrNotFound            = errors.New("resource not found")
 	ErrConflict            = errors.New("same title already exists")
 	ErrForeignKeyViolation = errors.New("invalid user_id, user does not exist")
+	ErrDuplicateEmail      = errors.New("duplicate emailid")
+	ErrDuplicateUsername   = errors.New("duplicate username")
 	QueryTimeoutDuration   = time.Second * 5
 )
 
@@ -23,9 +25,10 @@ type Storage struct {
 		GetUserFeed(context.Context, int64, PaginatedFeedQuery) ([]PostWithMetaData, error)
 	}
 	UsersIF interface {
-		Create(context.Context, *User) error
+		Create(context.Context, *sql.Tx, *User) error
 		GetByID(context.Context, int64) (*User, error)
-		CreateAndInvite(ctx context.Context, user *User, token string) error
+		CreateAndInvite(ctx context.Context, user *User, token string, exp time.Duration) error
+		Activate(context.Context, string) error
 	}
 	CommentsIF interface {
 		Create(context.Context, *Comment) error
@@ -44,4 +47,16 @@ func NewStorage(db *sql.DB) Storage {
 		CommentsIF: &CommentsStore{db},
 		FollowIF:   &followerStore{db},
 	}
+}
+
+func withTx(db *sql.DB, ctx context.Context, fn func(*sql.Tx) error) error {
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	if err := fn(tx); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	return tx.Commit()
 }
