@@ -28,7 +28,7 @@ type FollowUser struct {
 //	@Failure		404		{object}	error
 //	@Failure		500		{object}	error
 //	@Security		ApiKeyAuth
-//	@Router			/users//activate/{token} [put]
+//	@Router			/users/activate/{token} [put]
 func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Request) {
 	token := chi.URLParam(r, "token")
 	err := app.store.UsersIF.Activate(r.Context(), token)

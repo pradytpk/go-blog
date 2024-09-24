@@ -36,7 +36,7 @@ const docTemplate = `{
                 "tags": [
                     "authentication"
                 ],
-                "summary": "Register a user",
+                "summary": "Registers a user",
                 "parameters": [
                     {
                         "description": "User credentials",
@@ -49,6 +49,12 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
+                    "201": {
+                        "description": "User registered",
+                        "schema": {
+                            "$ref": "#/definitions/main.UserWithToken"
+                        }
+                    },
                     "400": {
                         "description": "Bad Request",
                         "schema": {}
@@ -279,7 +285,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/users//activate/{token}": {
+        "/users/activate/{token}": {
             "put": {
                 "security": [
                     {
@@ -603,6 +609,32 @@ const docTemplate = `{
                 "title": {
                     "type": "string",
                     "maxLength": 100
+                }
+            }
+        },
+        "main.UserWithToken": {
+            "type": "object",
+            "properties": {
+                "_": {
+                    "$ref": "#/definitions/store.password"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "token": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },

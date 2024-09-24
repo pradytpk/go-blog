@@ -44,6 +44,23 @@ definitions:
         maxLength: 100
         type: string
     type: object
+  main.UserWithToken:
+    properties:
+      _:
+        $ref: '#/definitions/store.password'
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      token:
+        type: string
+      username:
+        type: string
+    type: object
   store.Comment:
     properties:
       content:
@@ -160,13 +177,17 @@ paths:
       produces:
       - application/json
       responses:
+        "201":
+          description: User registered
+          schema:
+            $ref: '#/definitions/main.UserWithToken'
         "400":
           description: Bad Request
           schema: {}
         "500":
           description: Internal Server Error
           schema: {}
-      summary: Register a user
+      summary: Registers a user
       tags:
       - authentication
   /health:
@@ -312,33 +333,6 @@ paths:
       summary: Updates a post
       tags:
       - posts
-  /users//activate/{token}:
-    put:
-      description: Activate/Register a user by invitation token
-      parameters:
-      - description: Invitation token
-        in: path
-        name: token
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: User activated
-          schema:
-            type: string
-        "404":
-          description: Not Found
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      security:
-      - ApiKeyAuth: []
-      summary: Activate/Register a user
-      tags:
-      - users
   /users/{id}:
     get:
       consumes:
@@ -427,6 +421,33 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Unfollow a user
+      tags:
+      - users
+  /users/activate/{token}:
+    put:
+      description: Activate/Register a user by invitation token
+      parameters:
+      - description: Invitation token
+        in: path
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: User activated
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Activate/Register a user
       tags:
       - users
   /users/feed:

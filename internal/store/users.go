@@ -23,7 +23,6 @@ type User struct {
 	Password  password `json:"_"`
 	CreatedAt string   `json:"created_at"`
 	IsActive  bool     `json:"is_active"`
-	// roleID    int      `json:"role_Id`
 }
 
 type password struct {
@@ -44,8 +43,8 @@ func (p *password) Set(text string) error {
 }
 
 func (s *UsersStore) Create(ctx context.Context, tx *sql.Tx, user *User) error {
-	query := `INSERT INTO users (username,email,password,role_id) 
-	VALUES ($1,$2,$3,$4) RETURNING id, created_at`
+	query := `INSERT INTO users (username,email,password) 
+	VALUES ($1,$2,$3) RETURNING id, created_at`
 	fmt.Println(user.Email)
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
@@ -54,7 +53,6 @@ func (s *UsersStore) Create(ctx context.Context, tx *sql.Tx, user *User) error {
 		user.Username,
 		user.Email,
 		user.Password.hash,
-		// user.roleID,
 	).Scan(
 		&user.ID,
 		&user.CreatedAt,
@@ -126,6 +124,21 @@ func (s *UsersStore) Activate(ctx context.Context, token string) error {
 		return nil
 	})
 }
+
+func (s *UsersStore) Delete(ctx context.Context, userID int64) error {
+	return withTx(s.db, ctx, func(tx *sql.Tx) error {
+		if err := s.delete(ctx, tx, userID); err != nil {
+			return err
+		}
+
+		if err := s.deleteUserInvitations(ctx, tx, userID); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
 func (s *UsersStore) update(ctx context.Context, tx *sql.Tx, user *User) error {
 	query := `UPDATE users SET username = $1, email=$2, is_active=$3 where id =$4`
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
@@ -185,5 +198,19 @@ func (s *UsersStore) deleteUserInvitations(ctx context.Context, tx *sql.Tx, user
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (s *UsersStore) delete(ctx context.Context, tx *sql.Tx, id int64) error {
+	query := `DELETE FROM users WHERE id = $1`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	_, err := tx.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
