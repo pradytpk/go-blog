@@ -16,35 +16,47 @@ import (
 
 const version = "0.0.1"
 
-type application struct {
-	config config
-	store  store.Storage
-	logger *zap.SugaredLogger
-	mailer mailer.Client
-}
+type (
+	application struct {
+		config config
+		store  store.Storage
+		logger *zap.SugaredLogger
+		mailer mailer.Client
+	}
 
-type config struct {
-	addr        string
-	db          dbConfig
-	env         string
-	apiURL      string
-	mail        mailConfig
-	frontendURL string
-}
-type mailConfig struct {
-	sendGrid sendGridConfig
-	exp      time.Duration
-}
-type sendGridConfig struct {
-	apiKey    string
-	fromEmail string
-}
-type dbConfig struct {
-	addr         string
-	maxOpenConns int
-	maxIdleConns int
-	maxIdleTime  string
-}
+	authConfig struct {
+		basic basicConfig
+	}
+
+	basicConfig struct {
+		user string
+		pass string
+	}
+
+	config struct {
+		addr        string
+		db          dbConfig
+		env         string
+		apiURL      string
+		mail        mailConfig
+		frontendURL string
+		auth        authConfig
+	}
+	mailConfig struct {
+		sendGrid sendGridConfig
+		exp      time.Duration
+	}
+	sendGridConfig struct {
+		apiKey    string
+		fromEmail string
+	}
+	dbConfig struct {
+		addr         string
+		maxOpenConns int
+		maxIdleConns int
+		maxIdleTime  string
+	}
+)
 
 func (app *application) mount() http.Handler {
 	r := chi.NewRouter()
@@ -61,7 +73,7 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	r.Route("/v1/", func(r chi.Router) {
-		r.Get("/health", app.healthCheckHandler)
+		r.With(app.BasicAuthMiddleware()).Get("/health", app.healthCheckHandler)
 		docsURL := fmt.Sprintf("%s/swagger/doc.json", app.config.addr)
 		r.Get("/swagger/*", httpSwagger.Handler(
 			httpSwagger.URL(docsURL), //The url pointing to API definition

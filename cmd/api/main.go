@@ -48,6 +48,12 @@ func main() {
 				fromEmail: env.GetString("SEND_FROM_MAIL", ""),
 			},
 		},
+		auth: authConfig{
+			basic: basicConfig{
+				user: env.GetString("AUTH_BASIC_USER", "admin"),
+				pass: env.GetString("AUTH_BASIC_PASS", "admin"),
+			},
+		},
 	}
 
 	// Logger
