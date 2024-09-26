@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/pradytpk/go-blog/internal/auth"
 	"github.com/pradytpk/go-blog/internal/db"
 	"github.com/pradytpk/go-blog/internal/env"
 	"github.com/pradytpk/go-blog/internal/mailer"
@@ -52,6 +53,10 @@ func main() {
 			basic: basicConfig{
 				user: env.GetString("AUTH_BASIC_USER", "admin"),
 				pass: env.GetString("AUTH_BASIC_PASS", "admin"),
+			}, token: tokenConfig{
+				secret: env.GetString("AUTH_TOKEN_SECRET", "example"),
+				exp:    time.Hour * 24 * 3,
+				iss:    "social",
 			},
 		},
 	}
@@ -73,11 +78,13 @@ func main() {
 
 	mailer := mailer.NewSendgrid(cfg.mail.sendGrid.apiKey, cfg.mail.sendGrid.fromEmail)
 
+	jwtAuthenticator := auth.NewJWTAuthenticator(cfg.auth.token.secret, cfg.auth.token.iss, cfg.auth.token.iss)
 	app := &application{
-		config: cfg,
-		store:  store,
-		logger: logger,
-		mailer: mailer,
+		config:        cfg,
+		store:         store,
+		logger:        logger,
+		mailer:        mailer,
+		authenticator: jwtAuthenticator,
 	}
 
 	mux := app.mount()

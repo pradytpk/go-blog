@@ -30,6 +30,7 @@ type Storage struct {
 		CreateAndInvite(ctx context.Context, user *User, token string, exp time.Duration) error
 		Activate(context.Context, string) error
 		Delete(context.Context, int64) error
+		GetByEmail(context.Context, string) (*User, error)
 	}
 	CommentsIF interface {
 		Create(context.Context, *Comment) error

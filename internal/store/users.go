@@ -214,3 +214,26 @@ func (s *UsersStore) delete(ctx context.Context, tx *sql.Tx, id int64) error {
 
 	return nil
 }
+
+func (s *UsersStore) GetByEmail(ctx context.Context, email string) (*User, error) {
+	query := `SELECT id, username, email, created_at
+				FROM users 
+				WHERE email=$1 AND is_active=true`
+	user := &User{}
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+	err := s.db.QueryRowContext(
+		ctx, query, email).Scan(&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.CreatedAt)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrNotFound
+		default:
+			return nil, err
+		}
+	}
+	return user, nil
+}
