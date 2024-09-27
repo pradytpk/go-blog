@@ -81,7 +81,7 @@ func (s *UsersStore) GetByID(ctx context.Context, userId int64) (*User, error) {
 		ctx, query, userId).Scan(&user.ID,
 		&user.Username,
 		&user.Email,
-		&user.Password,
+		&user.Password.hash,
 		&user.CreatedAt)
 	if err != nil {
 		switch {

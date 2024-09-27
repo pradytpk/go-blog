@@ -44,11 +44,11 @@ func (app *application) creatPostHandler(w http.ResponseWriter, r *http.Request)
 		app.badRequestResponse(w, r, err)
 		return
 	}
-
+	user := getUserFromCtx(r)
 	post := &store.Post{
 		Title:   payload.Title,
 		Content: payload.Content,
-		UserID:  1,
+		UserID:  user.ID,
 		Tags:    payload.Tags,
 	}
 
