@@ -17,7 +17,6 @@ type RegisterUserPayload struct {
 	Username string `json:"username" validate:"required,max=100"`
 	Email    string `json:"email" validate:"required,max=255"`
 	Password string `json:"password" validate:"required,min=3,max=100"`
-	// RoleID   int    `json:"roleId" validate:"required,min=1,max=2"`
 }
 
 type UserWithToken struct {
@@ -52,6 +51,9 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	user := &store.User{
 		Username: payload.Username,
 		Email:    payload.Email,
+		Role: store.Role{
+			Name: "user",
+		},
 	}
 
 	// hash the user password
@@ -124,30 +126,27 @@ type CreateUserTokenPayload struct {
 
 // createTokenHandler godoc
 //
-//	@Summary		create a token
-//	@Description	Registers a token for a user
+//	@Summary		Creates a token
+//	@Description	Creates a token for a user
 //	@Tags			authentication
 //	@Accept			json
 //	@Produce		json
 //	@Param			payload	body		CreateUserTokenPayload	true	"User credentials"
-//	@Success		201		string		"Token"
+//	@Success		200		{string}	string					"Token"
 //	@Failure		400		{object}	error
 //	@Failure		401		{object}	error
 //	@Failure		500		{object}	error
 //	@Router			/authentication/token [post]
 func (app *application) createTokenHandler(w http.ResponseWriter, r *http.Request) {
-	// parse payload credentials
 	var payload CreateUserTokenPayload
 	if err := readJson(w, r, &payload); err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
-
 	if err := Validate.Struct(payload); err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
-	// fetch the user(check if the user exist) from the payload
 	user, err := app.store.UsersIF.GetByEmail(r.Context(), payload.Email)
 	if err != nil {
 		switch err {
@@ -158,7 +157,6 @@ func (app *application) createTokenHandler(w http.ResponseWriter, r *http.Reques
 		}
 		return
 	}
-	//	generate the token -> add claims
 	claims := jwt.MapClaims{
 		"sub": user.ID,
 		"exp": time.Now().Add(app.config.auth.token.exp).Unix(),
@@ -172,9 +170,7 @@ func (app *application) createTokenHandler(w http.ResponseWriter, r *http.Reques
 		app.internalServerError(w, r, err)
 		return
 	}
-	// send it to the client
 	if err := app.jsonResponse(w, http.StatusCreated, token); err != nil {
 		app.internalServerError(w, r, err)
-		return
 	}
 }

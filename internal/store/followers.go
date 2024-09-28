@@ -7,7 +7,7 @@ import (
 	"github.com/lib/pq"
 )
 
-type followerStore struct {
+type FollowerStore struct {
 	db *sql.DB
 }
 
@@ -17,7 +17,7 @@ type Follower struct {
 	CreatedAt  string `json:"created_at"`
 }
 
-func (s *followerStore) Follow(ctx context.Context, followerUserId int64, userId int64) error {
+func (s *FollowerStore) Follow(ctx context.Context, followerUserId int64, userId int64) error {
 	query := `
 	INSERT into followers (user_id, follower_id) values ($1,$2)
 	`
@@ -38,7 +38,7 @@ func (s *followerStore) Follow(ctx context.Context, followerUserId int64, userId
 	return nil
 }
 
-func (s *followerStore) UnFollow(ctx context.Context, followerUserId int64, userId int64) error {
+func (s *FollowerStore) UnFollow(ctx context.Context, followerUserId int64, userId int64) error {
 	query := `
 	DELETE FROM followers WHERE user_id = $1 and follower_id= $2
 	`

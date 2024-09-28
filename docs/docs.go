@@ -26,7 +26,7 @@ const docTemplate = `{
     "paths": {
         "/authentication/token": {
             "post": {
-                "description": "Registers a token for a user",
+                "description": "Creates a token for a user",
                 "consumes": [
                     "application/json"
                 ],
@@ -36,7 +36,7 @@ const docTemplate = `{
                 "tags": [
                     "authentication"
                 ],
-                "summary": "create a token",
+                "summary": "Creates a token",
                 "parameters": [
                     {
                         "description": "User credentials",
@@ -49,7 +49,7 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "201": {
+                    "200": {
                         "description": "Token",
                         "schema": {
                             "type": "string"
@@ -601,7 +601,6 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "content",
-                "tags",
                 "title"
             ],
             "properties": {
@@ -611,7 +610,6 @@ const docTemplate = `{
                 },
                 "tags": {
                     "type": "array",
-                    "maxItems": 100,
                     "items": {
                         "type": "string"
                     }
@@ -693,6 +691,12 @@ const docTemplate = `{
                 },
                 "is_active": {
                     "type": "boolean"
+                },
+                "role": {
+                    "$ref": "#/definitions/store.Role"
+                },
+                "role_id": {
+                    "type": "integer"
                 },
                 "token": {
                     "type": "string"
@@ -810,6 +814,23 @@ const docTemplate = `{
                 }
             }
         },
+        "store.Role": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "level": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "store.User": {
             "type": "object",
             "properties": {
@@ -827,6 +848,12 @@ const docTemplate = `{
                 },
                 "is_active": {
                     "type": "boolean"
+                },
+                "role": {
+                    "$ref": "#/definitions/store.Role"
+                },
+                "role_id": {
+                    "type": "integer"
                 },
                 "username": {
                     "type": "string"

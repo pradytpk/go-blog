@@ -17,7 +17,7 @@ const postCtx postKey = "post"
 type CreatPostPayLoad struct {
 	Title   string   `json:"title" validate:"required,max=100"`
 	Content string   `json:"content" validate:"required,max=1000"`
-	Tags    []string `json:"tags" validate:"required,max=100"`
+	Tags    []string `json:"tags"`
 }
 
 // CreatePost godoc
@@ -40,16 +40,19 @@ func (app *application) creatPostHandler(w http.ResponseWriter, r *http.Request)
 		app.badRequestResponse(w, r, err)
 		return
 	}
+
 	if err := Validate.Struct(payload); err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
+
 	user := getUserFromCtx(r)
+
 	post := &store.Post{
 		Title:   payload.Title,
 		Content: payload.Content,
-		UserID:  user.ID,
 		Tags:    payload.Tags,
+		UserID:  user.ID,
 	}
 
 	ctx := r.Context()
@@ -58,6 +61,7 @@ func (app *application) creatPostHandler(w http.ResponseWriter, r *http.Request)
 		app.internalServerError(w, r, err)
 		return
 	}
+
 	if err := app.jsonResponse(w, http.StatusCreated, post); err != nil {
 		app.internalServerError(w, r, err)
 		return

@@ -19,7 +19,7 @@
     "paths": {
         "/authentication/token": {
             "post": {
-                "description": "Registers a token for a user",
+                "description": "Creates a token for a user",
                 "consumes": [
                     "application/json"
                 ],
@@ -29,7 +29,7 @@
                 "tags": [
                     "authentication"
                 ],
-                "summary": "create a token",
+                "summary": "Creates a token",
                 "parameters": [
                     {
                         "description": "User credentials",
@@ -42,7 +42,7 @@
                     }
                 ],
                 "responses": {
-                    "201": {
+                    "200": {
                         "description": "Token",
                         "schema": {
                             "type": "string"
@@ -594,7 +594,6 @@
             "type": "object",
             "required": [
                 "content",
-                "tags",
                 "title"
             ],
             "properties": {
@@ -604,7 +603,6 @@
                 },
                 "tags": {
                     "type": "array",
-                    "maxItems": 100,
                     "items": {
                         "type": "string"
                     }
@@ -686,6 +684,12 @@
                 },
                 "is_active": {
                     "type": "boolean"
+                },
+                "role": {
+                    "$ref": "#/definitions/store.Role"
+                },
+                "role_id": {
+                    "type": "integer"
                 },
                 "token": {
                     "type": "string"
@@ -803,6 +807,23 @@
                 }
             }
         },
+        "store.Role": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "level": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "store.User": {
             "type": "object",
             "properties": {
@@ -820,6 +841,12 @@
                 },
                 "is_active": {
                     "type": "boolean"
+                },
+                "role": {
+                    "$ref": "#/definitions/store.Role"
+                },
+                "role_id": {
+                    "type": "integer"
                 },
                 "username": {
                     "type": "string"
