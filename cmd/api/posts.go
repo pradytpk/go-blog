@@ -169,7 +169,8 @@ func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request
 		post.Content = *payload.Title
 	}
 
-	if err := app.store.PostsIF.Update(r.Context(), post); err != nil {
+	ctx := r.Context()
+	if err := app.updatePost(ctx, post); err != nil {
 		app.internalServerError(w, r, err)
 		return
 	}
@@ -207,4 +208,12 @@ func (app *application) postContextMiddleware(next http.Handler) http.Handler {
 func getPostFromCtx(r *http.Request) *store.Post {
 	post, _ := r.Context().Value(postCtx).(*store.Post)
 	return post
+}
+
+func (app *application) updatePost(ctx context.Context, post *store.Post) error {
+	if err := app.store.PostsIF.Update(ctx, post); err != nil {
+		return err
+	}
+	app.cacheStorage.Users.Delete(ctx, post.ID)
+	return nil
 }
