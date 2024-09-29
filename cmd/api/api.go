@@ -11,6 +11,7 @@ import (
 	"github.com/pradytpk/go-blog/internal/auth"
 	"github.com/pradytpk/go-blog/internal/mailer"
 	"github.com/pradytpk/go-blog/internal/store"
+	"github.com/pradytpk/go-blog/internal/store/cache"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 	"go.uber.org/zap"
 )
@@ -24,6 +25,7 @@ type (
 		logger        *zap.SugaredLogger
 		mailer        mailer.Client
 		authenticator auth.Authenticator
+		cacheStorage  cache.Storage
 	}
 
 	authConfig struct {
@@ -50,6 +52,14 @@ type (
 		mail        mailConfig
 		frontendURL string
 		auth        authConfig
+		redis       redisConfig
+	}
+
+	redisConfig struct {
+		addr    string
+		pw      string
+		db      int
+		enabled bool
 	}
 	mailConfig struct {
 		sendGrid sendGridConfig
