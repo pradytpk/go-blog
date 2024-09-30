@@ -17,7 +17,7 @@ type Storage struct {
 
 func NewRedisStorage(rdb *redis.Client) Storage {
 	return Storage{
-		Users: &UserStore{
+		Users: &UserStoreC{
 			rdb: rdb,
 		},
 	}
