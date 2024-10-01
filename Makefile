@@ -27,3 +27,7 @@ gen-docs:
 .PHONY: test
 test:
 	@go test -v ./...
+
+.PHONY: build
+build:
+	@docker-compose up --build

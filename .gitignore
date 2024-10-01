@@ -2,3 +2,4 @@
 bin/build-errors.log
 bin/main
 .vscode/
+api
