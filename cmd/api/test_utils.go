@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/pradytpk/go-blog/internal/auth"
+	"github.com/pradytpk/go-blog/internal/ratelimiter"
 	"github.com/pradytpk/go-blog/internal/store"
 	"github.com/pradytpk/go-blog/internal/store/cache"
 	"go.uber.org/zap"
@@ -14,17 +15,23 @@ import (
 func newTestApplication(t *testing.T, cfg config) *application {
 	t.Helper()
 	logger := zap.NewNop().Sugar()
-	// Uncomment to enable logs
-	// logger := zap.Must(zap.NewProduction()).Sugar()
+	// Uncomment to enable logction()).Sugar()
 	mockStore := store.NewMockStore()
 	mockCacheStore := cache.NewMockStore()
 	testAuth := &auth.TestAuthenticator{}
+
+	// Rate limiter
+	rateLimiter := ratelimiter.NewFixedWindowLimiter(
+		cfg.rateLimiter.RequestsPerTimeFrame,
+		cfg.rateLimiter.TimeFrame,
+	)
 	return &application{
 		logger:        logger,
 		store:         mockStore,
 		cacheStorage:  mockCacheStore,
 		authenticator: testAuth,
 		config:        cfg,
+		rateLimiter:   rateLimiter,
 	}
 }
 func executeRequest(req *http.Request, mux http.Handler) *httptest.ResponseRecorder {

@@ -9,6 +9,7 @@ import (
 	"github.com/pradytpk/go-blog/internal/db"
 	"github.com/pradytpk/go-blog/internal/env"
 	"github.com/pradytpk/go-blog/internal/mailer"
+	"github.com/pradytpk/go-blog/internal/ratelimiter"
 	"github.com/pradytpk/go-blog/internal/store"
 	"github.com/pradytpk/go-blog/internal/store/cache"
 	"go.uber.org/zap"
@@ -48,7 +49,7 @@ func main() {
 			addr:    env.GetString("REDIS_ADDR", "localhost:6379"),
 			pw:      env.GetString("REDIS_PW", ""),
 			db:      env.GetInt("REDIS_DB", 0),
-			enabled: env.GetBool("REDIS_ENABLED", true),
+			enabled: env.GetBool("REDIS_ENABLED", false),
 		},
 		env: env.GetString("ENV", "development"),
 		mail: mailConfig{
@@ -67,6 +68,11 @@ func main() {
 				exp:    time.Hour * 24 * 3,
 				iss:    "social",
 			},
+		},
+		rateLimiter: ratelimiter.Config{
+			RequestsPerTimeFrame: env.GetInt("RATELIMITER_REQUESTS_COUNT", 20),
+			TimeFrame:            time.Second * 5,
+			Enabled:              env.GetBool("RATE_LIMITER_ENABLED", true),
 		},
 	}
 
@@ -93,6 +99,12 @@ func main() {
 		defer rdb.Close()
 	}
 
+	// Rate limiter
+	rateLimiter := ratelimiter.NewFixedWindowLimiter(
+		cfg.rateLimiter.RequestsPerTimeFrame,
+		cfg.rateLimiter.TimeFrame,
+	)
+
 	store := store.NewStorage(db)
 	cacheStorage := cache.NewRedisStorage(rdb)
 
@@ -106,6 +118,7 @@ func main() {
 		mailer:        mailer,
 		authenticator: jwtAuthenticator,
 		cacheStorage:  cacheStorage,
+		rateLimiter:   rateLimiter,
 	}
 
 	mux := app.mount()

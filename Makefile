@@ -31,3 +31,7 @@ test:
 .PHONY: build
 build:
 	@docker-compose up --build
+
+.PHONY: testing-api
+testing-api:
+	@npx autocannon -r 22 -d 1 -c 1 --renderStatusCodes http://localhost:8080/v1/health

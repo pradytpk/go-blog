@@ -15,6 +15,7 @@ import (
 	"github.com/pradytpk/go-blog/docs"
 	"github.com/pradytpk/go-blog/internal/auth"
 	"github.com/pradytpk/go-blog/internal/mailer"
+	"github.com/pradytpk/go-blog/internal/ratelimiter"
 	"github.com/pradytpk/go-blog/internal/store"
 	"github.com/pradytpk/go-blog/internal/store/cache"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
@@ -31,6 +32,7 @@ type (
 		mailer        mailer.Client
 		authenticator auth.Authenticator
 		cacheStorage  cache.Storage
+		rateLimiter   ratelimiter.Limiter
 	}
 
 	authConfig struct {
@@ -58,6 +60,7 @@ type (
 		frontendURL string
 		auth        authConfig
 		redis       redisConfig
+		rateLimiter ratelimiter.Config
 	}
 
 	redisConfig struct {
@@ -90,6 +93,7 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(app.RateLimiterMiddleware)
 
 	// Set a timeout value on the request context (ctx), that will signal
 	// through ctx.Done() that the request has timed out and further
